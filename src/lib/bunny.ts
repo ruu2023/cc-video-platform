@@ -1,6 +1,10 @@
-import { createHmac, randomUUID } from "node:crypto";
+import { createHash, createHmac, randomUUID } from "node:crypto";
 import { extname } from "node:path";
-import { nowSeconds, resolveTtlSeconds } from "@/lib/video-token";
+import { resolveTtlSeconds } from "@/lib/video-token";
+
+function nowSeconds(): number {
+  return Math.floor(Date.now() / 1000);
+}
 
 /**
  * The single server-side integration point for bunny.net (Sprint 6).
@@ -242,43 +246,41 @@ export async function createBunnyVideo(title: string): Promise<string> {
   return guid;
 }
 
+/** bunny.net's TUS (resumable upload) endpoint — the same one for every library. */
+export const TUS_UPLOAD_ENDPOINT = "https://video.bunnycdn.com/tusupload";
+
+export type TusUploadAuthorization = {
+  endpoint: string;
+  videoId: string;
+  libraryId: string;
+  signature: string;
+  expire: number;
+};
+
 /**
- * Uploads media bytes into a created video entry. `body` may be a web stream,
- * so a large upload never has to sit in memory.
+ * Creates an empty video entry and mints a short-lived TUS upload
+ * authorization for it, so the browser can stream the bytes straight to
+ * bunny.net instead of through this server. That matters on Vercel: Node.js
+ * Serverless Functions cap request bodies at ~4.5 MB, which every real lesson
+ * video blows past — routing the upload through a route handler like the
+ * stream/thumbnail ones simply cannot work here.
+ *
+ * `signature` is `sha256(libraryId + apiKey + expire + videoId)` — a one-way
+ * hash of the management API key, not the key itself, so it is safe to hand
+ * to the browser (bunny.net's documented TUS auth scheme).
  */
-export async function uploadBunnyVideo(
-  guid: string,
-  body: ReadableStream<Uint8Array> | ArrayBuffer | Uint8Array,
-  contentType: string,
-  contentLength?: number
-): Promise<void> {
-  const headers: Record<string, string> = {
-    AccessKey: streamApiKey(),
-  };
-  if (contentType) headers["content-type"] = contentType;
-  if (typeof contentLength === "number" && Number.isFinite(contentLength)) {
-    headers["content-length"] = String(contentLength);
-  }
+export async function beginTusUpload(
+  title: string,
+  ttlSeconds = 60 * 60 * 2
+): Promise<TusUploadAuthorization> {
+  const videoId = await createBunnyVideo(title);
+  const library = libraryId();
+  const expire = nowSeconds() + ttlSeconds;
+  const signature = createHash("sha256")
+    .update(`${library}${streamApiKey()}${expire}${videoId}`)
+    .digest("hex");
 
-  const response = await fetch(
-    `${STREAM_API}/library/${libraryId()}/videos/${encodeURIComponent(guid)}`,
-    {
-      method: "PUT",
-      headers,
-      body: body as BodyInit,
-      // The request body is a live stream from the client, not a string.
-      ...(body instanceof ReadableStream ? { duplex: "half" } : {}),
-      cache: "no-store",
-    }
-  );
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    console.error(`Bunny upload failed (${response.status}): ${detail.slice(0, 400)}`);
-    throw new BunnyError(
-      `Bunny Stream への動画アップロードに失敗しました（${response.status}）。`
-    );
-  }
+  return { endpoint: TUS_UPLOAD_ENDPOINT, videoId, libraryId: library, signature, expire };
 }
 
 /* ------------------------------------------------------------- storage API */

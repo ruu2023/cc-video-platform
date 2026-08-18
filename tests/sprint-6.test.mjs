@@ -16,6 +16,7 @@ import { createClient } from "@libsql/client";
 import { createHmac } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { Upload as TusUpload } from "tus-js-client";
 
 const BASE_URL = (process.env.BASE_URL ?? "http://localhost:3100").replace(/\/$/, "");
 
@@ -398,21 +399,58 @@ describe("Sprint 6 — bunny.net 本番配信", () => {
   test("creatorがアップロードするとエンコード完了後にチャプターで再生できる", async () => {
     const bytes = await readFile(join(process.cwd(), "data", "videos", "lesson-02.mp4"));
 
-    const upload = await request(`/api/admin/chapters/${uploadChapter.id}/video`, {
+    // 1 — authorize: the server creates the bunny video entry and mints a
+    // short-lived TUS signature, but never touches the bytes.
+    const authorize = await request(`/api/admin/chapters/${uploadChapter.id}/video`, {
       jar: creatorJar,
       method: "POST",
-      body: bytes,
-      headers: {
-        "content-type": "video/mp4",
-        "x-file-name": encodeURIComponent("sprint6-lesson.mp4"),
-      },
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "sprint6-lesson.mp4",
+        contentType: "video/mp4",
+        fileSize: bytes.length,
+      }),
     });
-    if (upload.status !== 200) {
-      assert.fail(`upload failed: ${(await upload.text()).slice(0, 200)}`);
+    if (authorize.status !== 200) {
+      assert.fail(`authorize failed: ${(await authorize.text()).slice(0, 200)}`);
     }
-    const payload = await upload.json();
-    assert.ok(payload.videoId, "no videoId in the upload response");
-    uploadedGuid = payload.videoId;
+    const auth = await authorize.json();
+    assert.ok(auth.videoId, "no videoId in the authorize response");
+    uploadedGuid = auth.videoId;
+
+    // 2 — the bytes go straight to bunny.net, exactly like the browser does.
+    await new Promise((resolve, reject) => {
+      const tusUpload = new TusUpload(bytes, {
+        endpoint: auth.endpoint,
+        retryDelays: [0, 1000, 3000],
+        headers: {
+          AuthorizationSignature: auth.signature,
+          AuthorizationExpire: String(auth.expire),
+          VideoId: auth.videoId,
+          LibraryId: auth.libraryId,
+        },
+        metadata: { filetype: "video/mp4", title: "sprint6-lesson.mp4" },
+        onError: reject,
+        onSuccess: resolve,
+      });
+      tusUpload.start();
+    });
+
+    // 3 — complete: the guid is attached to the chapter only now.
+    const complete = await request(
+      `/api/admin/chapters/${uploadChapter.id}/video/complete`,
+      {
+        jar: creatorJar,
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ videoId: auth.videoId }),
+      }
+    );
+    if (complete.status !== 200) {
+      assert.fail(`complete failed: ${(await complete.text()).slice(0, 200)}`);
+    }
+    const payload = await complete.json();
+    assert.equal(payload.videoId, uploadedGuid);
 
     // Poll until bunny reports encode status 4 (finished).
     let status = payload.status;

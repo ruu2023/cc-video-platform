@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Upload as TusUpload } from "tus-js-client";
 import {
   addChapterAction,
   addResourceAction,
@@ -498,51 +499,101 @@ function VideoUploadPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, chapter.id]);
 
-  function upload(file: File) {
+  // Uploads go straight from the browser to bunny.net's TUS endpoint —
+  // never through this app's server — because a Vercel Serverless Function
+  // cannot accept a request body anywhere close to a real lesson video's
+  // size. This route only authorizes the upload and, once it finishes,
+  // attaches the resulting video id to the chapter.
+  async function upload(file: File) {
     setFileName(file.name);
     setPhase("uploading");
     setPercent(0);
     setMessage(null);
 
-    // XHR rather than fetch: real upload progress for large lesson files.
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", statusEndpoint);
-    xhr.setRequestHeader("x-file-name", encodeURIComponent(file.name));
-    xhr.setRequestHeader("content-type", file.type || "video/mp4");
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        setPercent(Math.round((event.loaded / event.total) * 100));
-      }
-    };
-    xhr.onerror = () => {
-      setPhase("error");
-      setMessage("アップロードに失敗しました。通信環境を確認してください。");
-    };
-    xhr.onload = async () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const payload = JSON.parse(xhr.responseText);
-          if (payload.videoId) setVideoId(payload.videoId);
-        } catch {
-          // response shape is best-effort; polling drives the rest
-        }
-        setPercent(100);
-        setPhase("encoding");
-        setMessage("アップロード完了。エンコード中…");
-        window.setTimeout(() => void poll(), 1500);
-        router.refresh();
+    try {
+      const authResponse = await fetch(statusEndpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          contentType: file.type || "video/mp4",
+          fileSize: file.size,
+        }),
+      });
+
+      if (!authResponse.ok) {
+        const detail = await authResponse
+          .json()
+          .then((payload) => payload.error as string | undefined)
+          .catch(() => undefined);
+        setPhase("error");
+        setMessage(detail ?? "アップロードの準備に失敗しました。");
         return;
       }
-      let detail = "アップロードに失敗しました。";
-      try {
-        detail = JSON.parse(xhr.responseText).error ?? detail;
-      } catch {
-        // keep the default
-      }
+
+      const auth = (await authResponse.json()) as {
+        endpoint: string;
+        videoId: string;
+        libraryId: string;
+        signature: string;
+        expire: number;
+      };
+
+      const tusUpload = new TusUpload(file, {
+        endpoint: auth.endpoint,
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        headers: {
+          AuthorizationSignature: auth.signature,
+          AuthorizationExpire: String(auth.expire),
+          VideoId: auth.videoId,
+          LibraryId: auth.libraryId,
+        },
+        metadata: {
+          filetype: file.type || "video/mp4",
+          title: file.name,
+        },
+        onError: () => {
+          setPhase("error");
+          setMessage("アップロードに失敗しました。通信環境を確認してください。");
+        },
+        onProgress: (bytesSent, bytesTotal) => {
+          setPercent(Math.round((bytesSent / bytesTotal) * 100));
+        },
+        onSuccess: async () => {
+          setVideoId(auth.videoId);
+          try {
+            const completeResponse = await fetch(`${statusEndpoint}/complete`, {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ videoId: auth.videoId }),
+            });
+            if (!completeResponse.ok) {
+              const detail = await completeResponse
+                .json()
+                .then((payload) => payload.error as string | undefined)
+                .catch(() => undefined);
+              setPhase("error");
+              setMessage(detail ?? "動画の紐付けに失敗しました。");
+              return;
+            }
+          } catch {
+            setPhase("error");
+            setMessage("動画の紐付けに失敗しました。通信環境を確認してください。");
+            return;
+          }
+          setPercent(100);
+          setPhase("encoding");
+          setMessage("アップロード完了。エンコード中…");
+          window.setTimeout(() => void poll(), 1500);
+          router.refresh();
+        },
+      });
+
+      tusUpload.start();
+    } catch {
       setPhase("error");
-      setMessage(detail);
-    };
-    xhr.send(file);
+      setMessage("アップロードの準備に失敗しました。通信環境を確認してください。");
+    }
   }
 
   const label =
