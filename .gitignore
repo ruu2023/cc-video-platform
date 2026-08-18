@@ -40,7 +40,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/data
+/data/app.db
+/data/uploads
+# data/videos is deliberately NOT ignored: those placeholder lesson clips are
+# the local fallback used whenever a chapter's bunny.net video isn't finished
+# (or doesn't exist) yet, and must ship with the deployment — see
+# outputFileTracingIncludes in next.config.ts — or playback 404s in
+# production for every chapter still on the fallback. A blanket "/data"
+# pattern here previously excluded them too; git's negation rules can't
+# re-include files once a parent directory pattern has matched, so the
+# exclusion has to stay this specific instead.
 !.env.example
 
 # playwright mcp output

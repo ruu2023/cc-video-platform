@@ -28,6 +28,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "30mb",
     },
   },
+  // The stream route reads data/videos/*.mp4 straight off disk (see
+  // src/lib/video-source.ts) via a dynamic path Next's file tracing can't
+  // follow statically, so without this the fallback clips are silently left
+  // out of the deployment and every chapter still on bunny.net's demo GUIDs
+  // 404s in production.
+  outputFileTracingIncludes: {
+    "/api/stream/[chapterId]": ["./data/videos/*.mp4"],
+  },
 };
 
 export default nextConfig;
