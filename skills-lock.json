@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "better-auth-security-best-practices": {
+      "source": "better-auth/skills",
+      "sourceType": "github",
+      "skillPath": "security/SKILL.md",
+      "computedHash": "7a230edf3a24ce18162cb4379f59b6a19b8d24ca04db530609d0f15cede556dc"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
