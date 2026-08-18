@@ -26,6 +26,10 @@ export const metadata: Metadata = {
   },
   description:
     "作り手本人が制作した動画講座を買い切りで販売するプラットフォーム。一度購入すれば無期限で視聴できます。",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
