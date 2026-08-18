@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "mcp-turso-cloud": {
+      "command": "npx",
+      "args": ["-y", "mcp-turso-cloud"],
+      "env": {
+        "TURSO_API_TOKEN": "${TURSO_API_TOKEN}",
+        "TURSO_ORGANIZATION": "${TURSO_ORGANIZATION}",
+        "TURSO_DEFAULT_DATABASE": "${TURSO_DEFAULT_DATABASE}"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }
+  }
+}

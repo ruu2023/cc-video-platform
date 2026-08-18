@@ -1,0 +1,39 @@
+{
+  "name": "cc-video-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3100",
+    "build": "next build",
+    "start": "next start --port 3100",
+    "lint": "eslint",
+    "db:migrate": "node --env-file=.env scripts/db.mjs migrate",
+    "db:seed": "node --env-file=.env scripts/db.mjs seed",
+    "db:reset": "node --env-file=.env scripts/db.mjs reset",
+    "auth:migrate": "npx --yes @better-auth/cli@latest migrate --config src/lib/auth.ts -y",
+    "thumbnails": "node scripts/make-thumbnails.mjs",
+    "videos": "node scripts/make-videos.mjs",
+    "resources": "node scripts/make-resources.mjs",
+    "setup": "npm run thumbnails && npm run videos && npm run resources && npm run db:migrate && npm run db:seed",
+    "test": "node --env-file=.env --test --test-concurrency=1 tests/**/*.test.mjs"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "@libsql/kysely-libsql": "^0.4.1",
+    "better-auth": "^1.6.29",
+    "kysely": "^0.29.5",
+    "next": "16.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "stripe": "^22.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "ffmpeg-static": "^5.3.0",
+    "typescript": "^5"
+  }
+}

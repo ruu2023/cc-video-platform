@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360" role="img">
+  <rect width="640" height="360" fill="#f7f7f4"/>
+  <rect x="24" y="24" width="592" height="312" rx="12" fill="#ffffff" stroke="#e6e5e0"/>
+
+  <path d="M24 36a12 12 0 0 1 12-12h568a12 12 0 0 1 12 12v34H24Z" fill="#fafaf7"/>
+  <line x1="24" y1="70" x2="616" y2="70" stroke="#e6e5e0"/>
+  <circle cx="44" cy="47" r="4" fill="#cfcdc4"/>
+  <circle cx="58" cy="47" r="4" fill="#cfcdc4"/>
+  <circle cx="72" cy="47" r="4" fill="#cfcdc4"/>
+  <text x="90" y="51" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#807d72">response.headers</text>
+  <rect x="522" y="36" width="78" height="22" rx="11" fill="#e6e5e0"/>
+  <text x="561" y="51" text-anchor="middle" font-family="Inter, system-ui, -apple-system, Helvetica Neue, Arial, sans-serif" font-size="11" font-weight="600" letter-spacing="0.88" fill="#26251e">SESSION</text>
+
+  <line x1="68" y1="70" x2="68" y2="302" stroke="#efeee8"/>
+  <text x="56" y="101" text-anchor="end" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a09c92">1</text>
+  <text x="56" y="127" text-anchor="end" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a09c92">2</text>
+  <text x="56" y="153" text-anchor="end" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a09c92">3</text>
+  <text x="56" y="179" text-anchor="end" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a09c92">4</text>
+  <text x="56" y="205" text-anchor="end" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a09c92">5</text>
+  <text x="56" y="231" text-anchor="end" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a09c92">6</text>
+  <text x="56" y="257" text-anchor="end" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a09c92">7</text>
+  <text x="56" y="283" text-anchor="end" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a09c92">8</text>
+  <text font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" xml:space="preserve"><tspan x="84.0" y="101" fill="#807d72">Set-Cookie: </tspan><tspan x="184.8" y="101" fill="#26251e">session=…</tspan></text>
+  <text font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" xml:space="preserve"><tspan x="84.0" y="127" fill="#5a5852">  HttpOnly;</tspan></text>
+  <text font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" xml:space="preserve"><tspan x="84.0" y="153" fill="#5a5852">  Secure;</tspan></text>
+  <text font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" xml:space="preserve"><tspan x="84.0" y="179" fill="#5a5852">  SameSite=</tspan><tspan x="176.4" y="179" fill="#f54e00">Lax</tspan><tspan x="201.6" y="179" fill="#5a5852">;</tspan></text>
+  <text font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" xml:space="preserve"><tspan x="84.0" y="205" fill="#5a5852">  Path=/;</tspan></text>
+  <text font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" xml:space="preserve"><tspan x="84.0" y="231" fill="#5a5852">  Max-Age=2592000</tspan></text>
+  <text font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" xml:space="preserve"><tspan x="84.0" y="257" fill="#5a5852"></tspan></text>
+  <text font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" xml:space="preserve"><tspan x="84.0" y="283" fill="#807d72">// 固定化はローテーションで塞ぐ</tspan></text>
+
+  <line x1="24" y1="302" x2="616" y2="302" stroke="#e6e5e0"/>
+  <rect x="44" y="315" width="8" height="8" rx="2" fill="#cfcdc4"/>
+  <text x="60" y="323" font-family="Inter, system-ui, -apple-system, Helvetica Neue, Arial, sans-serif" font-size="12" fill="#807d72">cookie 属性が守るもの</text>
+  <text x="596" y="323" text-anchor="end" font-family="JetBrains Mono, Fira Code, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" fill="#a09c92">Kouza</text>
+</svg>
