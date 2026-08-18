@@ -8,10 +8,19 @@ if (!process.env.BETTER_AUTH_SECRET) {
   );
 }
 
+// Vercel sets this to the exact host of the current deployment (preview or
+// production) at build/runtime — unlike a hardcoded BETTER_AUTH_URL, it never
+// goes stale across redeploys, and unlike a "*.vercel.app" trustedOrigins
+// wildcard it can't be satisfied by an unrelated attacker-owned Vercel app.
+const vercelDeploymentURL = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : undefined;
+
 export const auth = betterAuth({
   appName: "Kouza",
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  baseURL:
+    process.env.BETTER_AUTH_URL ?? vercelDeploymentURL ?? "http://localhost:3000",
   database: {
     dialect: new LibsqlDialect({
       url: databaseUrl,
