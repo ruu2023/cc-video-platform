@@ -8,10 +8,21 @@ if (!process.env.BETTER_AUTH_SECRET) {
   );
 }
 
-// Vercel sets this to the exact host of the current deployment (preview or
-// production) at build/runtime — unlike a hardcoded BETTER_AUTH_URL, it never
-// goes stale across redeploys, and unlike a "*.vercel.app" trustedOrigins
-// wildcard it can't be satisfied by an unrelated attacker-owned Vercel app.
+/*
+ * Vercel gives every deployment two valid hostnames, and users may land on
+ * either one:
+ *   - VERCEL_URL: the exact, unique host of *this* deployment (changes every
+ *     deploy, including previews)
+ *   - VERCEL_PROJECT_PRODUCTION_URL: the stable alias production traffic is
+ *     actually served from (e.g. cc-video-platform.vercel.app), constant
+ *     across deploys
+ * Both are set by the platform itself, not attacker-controlled, so trusting
+ * them is safe — unlike a "*.vercel.app" trustedOrigins wildcard, which an
+ * unrelated Vercel app could also satisfy.
+ */
+const vercelProductionURL = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : undefined;
 const vercelDeploymentURL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : undefined;
@@ -20,7 +31,13 @@ export const auth = betterAuth({
   appName: "Kouza",
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL:
-    process.env.BETTER_AUTH_URL ?? vercelDeploymentURL ?? "http://localhost:3000",
+    process.env.BETTER_AUTH_URL ??
+    vercelProductionURL ??
+    vercelDeploymentURL ??
+    "http://localhost:3000",
+  trustedOrigins: [vercelProductionURL, vercelDeploymentURL].filter(
+    (url): url is string => Boolean(url)
+  ),
   database: {
     dialect: new LibsqlDialect({
       url: databaseUrl,
